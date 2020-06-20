@@ -196,7 +196,6 @@ def create_app(test_config=None):
         else:
             abort(400)
 
-        print(category_id)
         query = Question.query.filter(Question.category == category_id)
         questions = paginate_questions(request, query)
         category = Category.query.get(category_id).format()
