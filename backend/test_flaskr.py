@@ -67,7 +67,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['total_questions'])
         self.assertTrue(data['questions'])
         self.assertTrue(data['categories'])
-        self.assertEqual(data['current_category'], 0)
+        self.assertEqual(data['current_category'], None)
 
 
     def test_get_404_error_paginated_questions(self):
@@ -94,7 +94,7 @@ class TriviaTestCase(unittest.TestCase):
             query = Question.query.filter(Question.question==self.question_data['question']).first()
             # print(f'query2 = {query.id}')
 
-        res = self.client().delete(f'/questions/{query.id}')
+        res = self.client().delete(f"/questions/{query.id}")
         data = json.loads(res.data)
 
         self.assertEqual(data['success'], True)
@@ -130,11 +130,85 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['message'], 'bad request')
 
         
+    def test_create_new_question(self):
+        res = self.client().post('/questions', json=self.question_data)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['created'])
+        self.assertTrue(len(data['questions']))
+
+    def test_405_question_creation_not_allowd(self):
+        res = self.client().post('/questions/42', json=self.question_data)
+        data = json.loads(res.data)
+
+        self.assertEqual(data['error'], 405)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'method not allowed')
+
+    
+    def test_search_questions(self):
+        query_text = 'title'
+        res = self.client().post('/questions/search', json={'searchTerm': query_text})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(len(data['questions']))
+        self.assertTrue(data['totalQuestions'])
 
 
+    def test_404_search_questions_not_found(self):
+        query_text = "windowsmokestackdirtyloo"
+        res = self.client().post('/questions/search', json={'searchTerm': query_text})
+        data = json.loads(res.data)
+
+        self.assertEqual(data['error'], 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'resource not found')
 
 
+    def test_get_questions_in_category(self):
+        quiz_data = {
+             'previous_questions':[],
+            "quiz_category": {'type': 'Geography', 'id': '3'}
+            }
+        res = self.client().post('/quizzes', data=json.dumps(quiz_data), content_type='application/json')
+        data = json.loads(res.data)
 
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(data['question'])
+
+
+    def test_404_get_questions_in_category_not_found(self):
+        category = 'Pot Holes'
+        res = self.client().post(f'/quizzes/{category}')
+        data = json.loads(res.data)
+
+        self.assertEqual(data['error'], 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'resource not found')
+
+    def test_list_questions_in_category(self):
+        category_id = 1
+        res = self.client().get(f'/categories/{category_id}/questions')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        # #don't test for questions because there might not be any questions in that list yet
+        # self.assertTrue(data['question'])
+        self.assertGreaterEqual(data['totalQuestions'], 0)
+        self.assertTrue(data['currentCategory'])
+    
+    def test_400_bad_request_list_questions_category(self):
+        category_id = 1.2
+        res = self.client().get(f'/categories/{category_id}/questions')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(data['success'], False)
+        self.assertTrue(data['message'], 'bad request' )
 
 
 # Make the tests conveniently executable
