@@ -72,9 +72,10 @@ This README is missing documentation of your endpoints. Below is an example for 
 
 Endpoints
 GET '/categories'
-GET ...
-POST ...
-DELETE ...
+GET '/questions'
+GET '/categories/<category_id>/questions'
+POST '/questions'
+DELETE '/questions/<item_id>'
 
 GET '/categories'
 - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
@@ -87,6 +88,98 @@ GET '/categories'
 '5' : "Entertainment",
 '6' : "Sports"}
 
+
+GET '/questions'
+- Fetches a paginated list of questions (10 questions per page)
+- Returns a json object:
+            {
+            'success': True,
+            'questions': paginated_questions,
+            'total_questions': len(questions),
+            'categories': categories,
+            'current_category': None
+            }
+    Where paginated_questions is a list of Question objects as defined in model.py
+
+- Usage example:    curl -X GET localhost:5000/questions&page=1 - to get the first 10 questions
+                    curl -X GET localhost:5000/questions&page=5 - to get the fifth page of questions
+- Error: 404 if no books are found.
+
+
+GET '/categories/<category_id>/questions'
+- Fetches a list of question within a specified category
+- Returns a json object:
+        {
+            'success': True,
+            'questions': questions,
+            'totalQuestions': len(questions),
+            'currentCategory': category
+        }
+    Where questions is a list of question objects as defined in models.py
+    and currentCategory is a category id.
+- Usage example:    curl -X GET localhost:5000/categories/1/questions'
+- Error: 400 if the query is badly formed
+
+
+DELETE '/questions/<item_id>'
+- Deletes an row in the question database table equal to item_id
+- Returns {'success': True}
+- Usage example: curl -X DELETE localhost:5000/questions/10 - Delete item 10 in the questions table
+- Error:    404 if item_id doesn't exist
+            400 if the request is badly formed
+
+
+POST '/questions'
+- Add a new question to the question table
+- Requirs a json object in the form:
+        {
+            'question': "question text",
+            'answer': "answere text,
+            'category': category_id(int),
+            'difficulty': difficulty level(int)
+        }
+- Returns: 
+        {
+            'success': True,
+            'created': item_id,
+            'questions': questions
+        }
+    Where question is a list of question objects
+- Usage Example:  curl -X POST -H "Content-Type: application/json" \
+                            -d '{'question': "question text",
+                                'answer': "answere text,
+                                'category': category_id(int),
+                                'difficulty': difficulty level(int)}' \
+                                localhost:5000/questions
+- Error: 500 if request can't be processed
+        
+
+
+POST '/questions/search'
+- Searches and returns a list of questions given a search term
+- Requires a json object in the form: {'searchTerm': query_text}
+- Returns: {
+            'success': True,
+            'questions': questions,
+            'totalQuestions': len(questions),
+            'currentCategory': None
+        }
+    Where questions is a list of questions that match the query
+- Usage Example: curl -X POST -H "Content-Type: application/json" \
+                            -d '{'searchTerm': "and"} \
+                            localhost:5000/questions/search
+- Error: 404 if no questions match the search pattern.
+
+GET '/categories/<category_id>/questions'
+
+
+POST '/quizzes'
+- Fetches a random question from a category if specified or the whole database if category=0.
+    Once the quetion is asked it won't be asked again in the current game
+- Requires a json object in the form: {'previous_questions': <list of previous questions ids>, 
+                                        "quiz_category": {'type': 'Geography', 'id': '3'}
+- Returns: {'success': True, 'question': question}
+- Error: 500 if the request can't be processed
 ```
 
 
